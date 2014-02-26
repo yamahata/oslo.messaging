@@ -18,9 +18,9 @@ import logging.config
 import os
 import sys
 try:
-    import threading
+    import thread
 except ImportError:
-    threading = None
+    thread = None
 
 import mock
 import testscenarios
@@ -39,9 +39,10 @@ logging.AUDIT = logging.INFO + 1
 logging.addLevelName(logging.AUDIT, 'AUDIT')
 
 
+# this must match with the implementation of logger.LogRecord
 def get_thread_ident():
-    if threading is not None:
-        return threading.current_thread().ident
+    if thread is not None:
+        return thread.get_ident()
     else:
         return None
 
