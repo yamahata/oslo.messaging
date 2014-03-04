@@ -1,5 +1,8 @@
-
-# Copyright 2013 Red Hat, Inc.
+# Copyright 2014 Intel Corporation.
+# Copyright 2014 Isaku Yamahata <isaku.yamahata at intel com>
+#                               <isaku.yamahata at gmail com>
+# All Rights Reserved.
+#
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -12,13 +15,13 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
+# @author: Isaku Yamahata, Intel Corporation.
 
-from .exceptions import *
-from .localcontext import *
-from .notify import *
+__all__ = [
+    'ProxyDispatcher',
+    'get_proxy_server',
+]
+
+from .dispatcher import ProxyDispatcher
 from .proxy import *
-from .rpc import *
-from .serializer import *
-from .server import *
-from .target import *
-from .transport import *
