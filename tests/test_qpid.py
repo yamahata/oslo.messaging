@@ -17,8 +17,10 @@ import thread
 import threading
 import time
 
+from eventlet import patcher
 import mock
 import qpid
+from qpid import selector
 import testscenarios
 
 from oslo import messaging
@@ -45,6 +47,20 @@ class TestQpidDriverLoad(test_utils.BaseTestCase):
 def _is_qpidd_service_running():
 
     """this function checks if the qpid service is running or not."""
+
+    if patcher.is_monkey_patched('thread'):
+        # NOTE(yamahata): workaround for eventlet bug
+        #                 threading thread to use eventlet Semaphore results
+        #                 in deadlock.
+        #                 self.thread.join() in qpid.selector.Selector.stop
+        #                 never returns
+        # https://bitbucket.org/eventlet/eventlet/pull-request/29/
+        # fix-use-of-semaphore-with-tpool-issue-137/diff
+        def _stop(self, timeout=None):
+            self.wakeup()
+            self.thread = None
+        selector.Selector.stop = _stop
+        return False
 
     qpid_running = True
     try:
