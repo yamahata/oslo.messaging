@@ -23,7 +23,6 @@ import threading
 import uuid
 
 import eventlet
-from qpid import selector
 import testscenarios
 
 from oslo import messaging
@@ -32,19 +31,6 @@ from oslo.messaging._drivers import impl_unix
 from tests import utils as test_utils
 
 
-# https://bitbucket.org/eventlet/eventlet/pull-request/29/
-# fix-use-of-semaphore-with-tpool-issue-137/diff
-# NOTE(yamahata): workaround for eventlet bug
-#                 threading thread to use eventlet Semaphore results
-#                 in deadlock.
-#                 self.thread.join() in qpid.selector.Selector.stop
-#                 never returns
-def _stop(self, timeout=None):
-    self.wakeup()
-    self.thread = None
-
-
-selector.Selector.stop = _stop
 eventlet.monkey_patch()
 
 
