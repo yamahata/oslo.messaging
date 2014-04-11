@@ -41,7 +41,7 @@ _ = lambda s: s
 LOG = logging.getLogger(__name__)
 unix_opts = [
     cfg.StrOpt('rpc_unix_ipc_dir',
-               default='/var/run/opentsack/rpc_unix_ipc_dir',
+               default='/var/run/openstack/rpc_unix_ipc_dir',
                help=_('Directory for holding UNIX domain socket for RPC')),
 ]
 
