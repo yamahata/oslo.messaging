@@ -29,6 +29,7 @@ import time
 import uuid
 
 import eventlet
+import eventlet.event
 from oslo.config import cfg
 from six import moves
 
@@ -328,8 +329,7 @@ class UnixDriver(base.BaseDriver):
             os.makedirs(unix_ipc_dir)
         return os.path.join(unix_ipc_dir, path)
 
-    @staticmethod
-    def _punix_listen(conf, path):
+    def _punix_listen(self, conf, path):
         path = UnixDriver._unix_ensure_dir(conf, path)
         LOG.debug(_('_punix_listen %s'), path)
 
@@ -340,6 +340,7 @@ class UnixDriver(base.BaseDriver):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.bind(path)
         sock.listen(5)
+        self.punix_listening.set()
         return sock
 
     @staticmethod
@@ -379,6 +380,7 @@ class UnixDriver(base.BaseDriver):
             url.virtual_host = uuid.uuid4().hex
         self._path = url.virtual_host
 
+        self.punix_listening = threading.Event()
         self._waiter = ReplyWaiter(allowed_remote_exmods)
         self._socket_lock = threading.Lock()
         if self._is_passive:
@@ -398,18 +400,21 @@ class UnixDriver(base.BaseDriver):
     def _get_socket(self):
         LOG.debug(_('_get_socket'))
         with self._socket_lock:
-            if self._socket is not None:
-                return self._socket
-            if self._is_passive:
-                sock = self._punix_accept(self._listen_socket)
-                self._listen_socket.close()
-                self._listen_socket = None
-            else:
-                sock = self._unix_connect(self.conf, self._path)
+            try:
+                if self._socket is not None:
+                    return self._socket
+                if self._is_passive:
+                    sock = self._punix_accept(self._listen_socket)
+                    self._listen_socket.close()
+                    self._listen_socket = None
+                else:
+                    sock = self._unix_connect(self.conf, self._path)
 
-            self._socket = sock
-            self._receiver.subscribe_topic(self._reply_q, self._waiter)
-            return self._socket
+                self._socket = sock
+                self._receiver.subscribe_topic(self._reply_q, self._waiter)
+                return self._socket
+            finally:
+                self.punix_listening.set()
 
     def reply(self, msg):
         assert self._socket is not None
