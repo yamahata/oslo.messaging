@@ -153,7 +153,9 @@ class UnixSender(object):
         time.sleep(0)   # give thread a chance to run
 
     def _loop(self, get_socket):
+        LOG.debug(_('UnixSender._loop enter'))
         f = get_socket().makefile()
+        LOG.debug(_('UnixSender._loop loop'))
         while True:
             msg = self._q.get()
             pickle.dump(msg, f)
@@ -166,6 +168,7 @@ class UnixSender(object):
                 pickle.dump(msg, f)
             f.flush()
             time.sleep(0)
+        LOG.debug(_('UnixSender._loop exit'))
 
     def kill(self):
         self._thread.kill()
@@ -229,13 +232,16 @@ class UnixReceiver(object):
         time.sleep(0)   # give thread a chance to run
 
     def _loop(self, get_socket):
+        LOG.debug(_('UnixReceiver._loop enter'))
         f = get_socket().makefile()
+        LOG.debug(_('UnixReceiver._loop loop'))
         while True:
             msg = pickle.load(f)
             ctxt = RpcContext.unpack(self.conf, msg)
             exchange = self._get_exchange(ctxt.exchange)
             exchange.deliver_message(ctxt, msg)
             time.sleep(0)
+        LOG.debug(_('UnixReceiver._loop exit'))
 
     def kill(self):
         self._thread.kill()
@@ -325,6 +331,7 @@ class UnixDriver(base.BaseDriver):
     @staticmethod
     def _punix_listen(conf, path):
         path = UnixDriver._unix_ensure_dir(conf, path)
+        LOG.debug(_('_punix_listen %s'), path)
 
         try:
             os.unlink(path)
@@ -337,11 +344,13 @@ class UnixDriver(base.BaseDriver):
 
     @staticmethod
     def _punix_accept(listen_socket):
+        LOG.debug(_('_punix_accept'))
         sock, _addr = listen_socket.accept()
         return sock
 
     @staticmethod
     def _punix_cleanup(conf, path):
+        LOG.debug(_('_punix_cleanup %s'), path)
         path = UnixDriver._unix_ensure_dir(conf, path)
         try:
             os.unlink(path)
@@ -350,6 +359,7 @@ class UnixDriver(base.BaseDriver):
 
     @staticmethod
     def _unix_connect(conf, path):
+        LOG.debug(_('_unix_connect'))
         path = UnixDriver._unix_ensure_dir(conf, path)
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.connect(path)
@@ -386,6 +396,7 @@ class UnixDriver(base.BaseDriver):
         pass
 
     def _get_socket(self):
+        LOG.debug(_('_get_socket'))
         with self._socket_lock:
             if self._socket is not None:
                 return self._socket
